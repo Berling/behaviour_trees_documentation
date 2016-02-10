@@ -1,0 +1,129 @@
+\chapter{Implementierung}
+Im Folgenden wird auf die in dieser Arbeit verwendeten Implementierung von Behaviour Trees eingegangen. Zunächst werden die zur Verfügung stehenden Knoten im Einzelnen besprochen und anschließend die für das Demo-Programm verwendten Behaviour Trees erläutert.
+
+Jeder Knoten besitzt eine Update-Funktion die den aktuellen Status des Knotens an dessen Vorgänger zurück gibt. Es gibt drei verschiedene Status-Werte: texttt{failure}, \texttt{success} und \texttt{pending}. Letzterer bedeutet, dass der Knoten noch nicht fertig abgearbeitet ist und dieser im nächsten Frame noch einmal bearbeitet werden muss.
+
+\section{Kntone}
+\begin{itemize}
+    \item \texttt{selection\_node:} Dieser Knoten besitzt eine Liste von Kindknoten. Beginnend mit dem ersten Knoten werden alle Knoten nacheinander abearbeitet, bis ein Knoten \texttt{success} zurück gibt oder alle Knoten \texttt{failure}. Der entsprechende Wert wird dann an den Vorgänger zurückgegeben.
+    \item \texttt{sequence\_node:} Ein Sequenzknoten unterscheidet sich vom \texttt{selection\_node} dahingehend, dass dieser nur \texttt{success} zurück gibt, wenn alle Kindknoten ebenfalls \texttt{success} zurück geben. Schlägt ein Kindknoten fehl, schlägt auch der gesamte \texttt{sequence\_node} fehl.
+    \item \texttt{parallel\_node:} Dieser Knotenverhält sich ähnlich wie der Sequenzknoten mit dem Unterschied, dass die Kindknoten nicht nacheinander, sondern gleichzeitig abgearbeitet werden.
+    \item \texttt{decorator\_node:} Diese werden zwischen zwei Knoten gesetzt um einen bestimmten Effeckt für den darunter liegenden Knoten zu erzeugen.
+    \item \texttt{until\_fail\_node:} Der Kindknoten wird solange ausgeführt bis dieser \texttt{failure} zurück gibt.
+    \item \texttt{invert\_node:} Invertiert den Status-Wert des Kindknoten. Aus \texttt{success} wird \texttt{failure} und aus \texttt{failure} \texttt{succcess}.
+    \item \texttt{move\_to\_node:} Das Entity bewegt sich zum angegebenen Ziel und gibt \texttt{success} zurück, wenn dieses erreicht ist.
+    \item \texttt{flee\_node:} Das Entity bewegt sich vom angegebenen Ziel weg und gibt \texttt{success} zurück, wenn die Distanz zwischen beiden groß genug ist.
+    \item \texttt{move\_random\_node:} Das Entity bewegt sich zu einem zufälligen Punkt auf einem Kreis um ein Ziel herum.
+    \item \texttt{stop\_movement\_node:} Stoppt alle Bewegungen des Entities.
+    \item \texttt{success\_node:} Gibt immer \texttt{success} zurück.
+    \item \texttt{away\_from\_node:} Gibt \texttt{success} zurück, wenn das Entity weit genug vom Ziel entfernt ist.
+\end{itemize}
+
+Im Demo-Programm wurden nicht alle dieser Knoten verwendet.
+
+\section{Demo-Programm}
+In der Demo gibt es zwei Raumschiffe und eine Raumstation. Das erste Schiff soll diese Raumstation bewachen und bei Feindsichtung diese vertreiben. Entfernt es sich dabei zu weit von der Station, kehrt es zu dieser zurück und patrolliert weiter um die Station. Das zweite Schiff bewegt sich zufällig durch den Raum und flüchtet bei Feindsichtung. Ist es weit genug weg vom ersten Schiff kehrt es wieder zu seinem ersten Verhalten zurück.
+
+\begin{figure}
+    \centering
+    \resizebox{0.8\textwidth}{!}{
+    \begin{tikzpicture}[-,>=stealth',shorten >=1pt,auto,node distance=4cm,
+        thick,main node/.style={rectangle,draw,font=\sffamily\Large\bfseries}]
+
+        \node[main node] (1) {\texttt{until\_fail}};
+        \node[main node] (2) [below of=1] {\texttt{sequence}};
+        \node[main node] (9) [below of=2] {\texttt{invert}};
+        \node[main node] (10) [below of=9] {\texttt{until\_fail}};
+        \node[main node] (11) [below of=10] {\texttt{parallel}};
+        \node[main node] (12) [below of=11] {\texttt{move\_to}};
+        \node[main node] (13) [right of=12] {\texttt {invert}};
+        \node[main node] (14) [below of=13] {\texttt {away\_from}};
+        \node[main node] (3) [left of=9] {\texttt{invert}};
+        \node[main node] (4) [left of=10] {\texttt{until\_fail}};
+        \node[main node] (5) [below of=4] {\texttt{parallel}};
+        \node[main node] (8) [below of=5] {\texttt{move\_random}};
+        \node[main node] (6) [left of=8] {\texttt{invert}};
+        \node[main node] (7) [below of=6] {\texttt{enemy\_sighted}};
+        \node (17) [right of=9] {};
+        \node[main node] (15) [right of=17] {\texttt{invert}};
+        \node[main node] (16) [below of=15] {\texttt{until\_fail}};
+        \node[main node] (18) [below of=16] {\texttt{parallel}};
+        \node[main node] (19) [below of=18] {\texttt{move\_to}};
+        \node[main node] (20) [right of=19] {\texttt{enemy\_sighted}};
+
+        \path[every node/.style={font=\sffamily\small}]
+        (1) edge (2)
+        (2) edge (3)
+        (3) edge (4)
+        (4) edge (5)
+        (5) edge (6)
+        (6) edge (7)
+        (5) edge (8)
+        (2) edge (9)
+        (9) edge (10)
+        (10) edge (11)
+        (11) edge (12)
+        (11) edge (13)
+        (13) edge (14)
+        (2) edge (15)
+        (15) edge (16)
+        (16) edge (18)
+        (18) edge (19)
+        (18) edge (20);
+    \end{tikzpicture}
+    }
+    \caption{Behaviour Tree des ersten Schiffs}
+    \label{fig:graph_rep}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \resizebox{0.8\textwidth}{!}{
+    \begin{tikzpicture}[-,>=stealth',shorten >=1pt,auto,node distance=4cm,
+        thick,main node/.style={rectangle,draw,font=\sffamily\Large\bfseries}]
+
+        \node[main node] (1) {\texttt{until\_fail}};
+        \node[main node] (2) [below of=1] {\texttt{sequence}};
+        \node[main node] (9) [below of=2] {\texttt{invert}};
+        \node[main node] (10) [below of=9] {\texttt{until\_fail}};
+        \node[main node] (11) [below of=10] {\texttt{parallel}};
+        \node[main node] (12) [below of=11] {\texttt{flee}};
+        \node[main node] (13) [right of=12] {\texttt {invert}};
+        \node[main node] (14) [below of=13] {\texttt {away\_from}};
+        \node[main node] (3) [left of=9] {\texttt{invert}};
+        \node[main node] (4) [left of=10] {\texttt{until\_fail}};
+        \node[main node] (5) [below of=4] {\texttt{parallel}};
+        \node[main node] (8) [below of=5] {\texttt{move\_random}};
+        \node[main node] (6) [left of=8] {\texttt{invert}};
+        \node[main node] (7) [below of=6] {\texttt{enemy\_sighted}};
+        \node (17) [right of=9] {};
+        \node[main node] (15) [right of=17] {\texttt{invert}};
+        \node[main node] (16) [below of=15] {\texttt{until\_fail}};
+        \node[main node] (18) [below of=16] {\texttt{parallel}};
+        \node[main node] (19) [below of=18] {\texttt{flee}};
+        \node[main node] (20) [right of=19] {\texttt{enemy\_sighted}};
+
+        \path[every node/.style={font=\sffamily\small}]
+        (1) edge (2)
+        (2) edge (3)
+        (3) edge (4)
+        (4) edge (5)
+        (5) edge (6)
+        (6) edge (7)
+        (5) edge (8)
+        (2) edge (9)
+        (9) edge (10)
+        (10) edge (11)
+        (11) edge (12)
+        (11) edge (13)
+        (13) edge (14)
+        (2) edge (15)
+        (15) edge (16)
+        (16) edge (18)
+        (18) edge (19)
+        (18) edge (20);
+    \end{tikzpicture}
+    }
+    \caption{Behaviour Tree des zweiten Schiffs}
+    \label{fig:graph_rep}
+\end{figure}

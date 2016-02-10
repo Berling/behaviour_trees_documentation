@@ -1,0 +1,13 @@
+\chapter{Bedienung}
+\section{Kompilierung}
+Die Kompilierung unter Windows wurde mit dem in der MinGW Distribution TDM (Version 5.1) enthaltenen GCC getestet. Folgender Schritte sind zur Kompilierung nötig. Es wird angenommen, dass der Pfad zu Premake in \texttt{PATH} eingetragen ist. Sollte dies nicht der fall sein, muss der vollständige Pfad zu Premake beim aufrufen angegeben werden.
+
+\begin{enumerate}
+    \item MinGW Konsole öfnnen
+    \item Ins Verzeichnis \texttt{behaviour\_trees} wechseln
+    \item premake5 gmake
+    \item mingw32-make.exe -j 4 CC=gcc CXX=g++
+\end{enumerate}
+
+\section{Steuerung}
+Das Demo-Programm muss nur gestartet werden mit \texttt{build\textbackslash{}behaviour\_trees.exe}. Es sind keine weiteren Eingaben nötig. Es kann sein, dass einige Zeit vergeht, bis sich das zweite Schiff der Raumstation nähert, da es sich zufällig um die Station bewegt.
